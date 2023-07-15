@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#ifndef MAP_LOADER
+#define MAP_LOADER
+
 /// Map object
 /**
  * All input maps should be in the format
@@ -24,7 +27,7 @@ typedef struct map {
 /// Functionality
 Map *initMap(char *fileName);
 void deleteMap(Map *m);
-inline int getIndex(Map *m, int row, int col);
+int getIndex(Map *m, int row, int col);
 void printMap(Map *m);
 
 /// Initialize the Map object
@@ -100,12 +103,15 @@ Map *initMap(char* filePath) {
     // Close the file
     fclose(file);
 
+    // realloc unused memory to (length - width * height)
+    M->map = (char *)realloc(M->map, (length - M->width * M->height));
+
     // Success!
     return M;
 }
 
 /// Get element 1d index
-inline int getIndex(Map *m, int row, int col) {
+int getIndex(Map *m, int row, int col) {
     return m->width * row + col;
 }
 
@@ -123,6 +129,8 @@ void printMap(Map *m) {
     }
     printf("\n");
 }
+
+#endif
 
 // int main() {
 //     Map *m = initMap("maps/map1.map");

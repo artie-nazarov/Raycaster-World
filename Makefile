@@ -3,10 +3,10 @@ CC=clang
 GL=-lglut -lGLU -lGL
 
 engine: engine.c
-	$(CC) -o engine $^ $(GL)
+	$(CC) -o engine $^ $(GL) 
 
-map_loader: map_loader.c
-	$(CC) -o map_loader $^ 
+map_loader.o: map_loader.c
+	$(CC) -c $^ 
 
 clean:
-	rm -f engine map_loader
+	rm -f engine map_loader map_loader.o
