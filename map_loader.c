@@ -83,7 +83,7 @@ Map *initMap(char* filePath) {
                 if (M->width == 0) {
                     M->width = width;
                 }
-                else if(M->width != width) {
+                else if(M->width != width && !new_row) {
                     printf("Error. Inconsistent width in the input Map\n");
                     free(M->map);
                     free(M);
@@ -124,9 +124,10 @@ void printMap(Map *m) {
     printf("\n");
 }
 
-//// Test
 // int main() {
 //     Map *m = initMap("maps/map1.map");
 //     printMap(m);
+//     printf("%d\n", m->height);
+//     printf("%d\n", m->width);
 //     return 0;
 // }
