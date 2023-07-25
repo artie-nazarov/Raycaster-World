@@ -20,9 +20,9 @@
 #define WALL_BLOCK_POWER 6
 
 /// Other Properties
-#define PI 3.1415926535
 #define RAY_LEN_FACTOR 10
 #define EPS 1e-5
+#define DEGREE1 (2*M_PI) / 360
 
 int px, py;         // player position global variables
 float pa;           // player position angle in randians
@@ -33,8 +33,8 @@ Map *m;             // Map object
 void raycast() {
     float ra = pa - M_PI_4; // ray angle
     float right_angle = ra; // used to traverse a circle 90 degrees
-    int hdx, hdy, hrx, hry; // horizontal ray intercept points and offests
-    int vdx, vdy, vrx, vry; // vertical ray intercept points and offests
+    double hdx, hdy, hrx, hry; // horizontal ray intercept points and offests
+    double vdx, vdy, vrx, vry; // vertical ray intercept points and offests
     int dop;                // depth of perception value in terms of number of blocks (how far a player can see)
 
     while (right_angle < pa + M_PI_4) { 
@@ -114,10 +114,10 @@ void raycast() {
         bool horizontal_hit = false; // check whether we hit a horizontal edge
         while (dop) {
             // check horizontal wall
-            ix = hrx >> WALL_BLOCK_POWER;
-            iy = hry >> WALL_BLOCK_POWER;
+            ix = (int)hrx >> WALL_BLOCK_POWER;
+            iy = (int)hry >> WALL_BLOCK_POWER;
             // Check map boundaries and whether we already found a horizontal hit
-            if ((ix >= 0 && ix < m->width) && (iy >= 0 && iy < m->height) && !horizontal_hit) {
+            if (!horizontal_hit && (ix >= 0 && ix < m->width) && (iy >= 0 && iy < m->height)) {
                 // we hit a horizontal wall
                 if (m->map[getIndex(m, iy, ix)] == '1') { horizontal_hit = true;}
                 // otherwise keep casting
@@ -127,12 +127,12 @@ void raycast() {
                 }
             }
             // check vertical wall
-            ix = vrx >> WALL_BLOCK_POWER;
-            iy = vry >> WALL_BLOCK_POWER;
+            ix = (int)vrx >> WALL_BLOCK_POWER;
+            iy = (int)vry >> WALL_BLOCK_POWER;
             // Check map boundaries and whether we already found a vertical hit
-            if ((ix >= 0 && ix < m->width) && (iy >= 0 && iy < m->height) && !vertical_hit) {
+            if (!vertical_hit && (ix >= 0 && ix < m->width) && (iy >= 0 && iy < m->height)) {
                 // we hit a vertical wall
-                if (m->map[getIndex(m, iy, ix)] == '1') { vertical_hit = true;}
+                if (m->map[getIndex(m, iy, ix)] == '1') { vertical_hit = true;} 
                 // otherwise keep casting
                 else {
                     vrx += vdx;
@@ -172,8 +172,8 @@ void raycast() {
         glEnd();
 
         // update angle values
-        ra += 0.05;         // next ray angle (unit circle bounds unchecked)
-        right_angle += 0.05; // update the loop counter
+        ra += DEGREE1;          // next ray angle (unit circle bounds unchecked)
+        right_angle += DEGREE1; // update the loop counter
     }
 
 }
