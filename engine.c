@@ -6,7 +6,7 @@
 #include "map_loader.c"
 
 /// Window Properties
-#define WIDTH 1024
+#define WIDTH 1600
 #define HEIGHT 800
 
 /// Player Properties
@@ -29,6 +29,11 @@ float pa;           // player position angle in randians
 float x_off, y_off; // x and y offsets based on player angle
 Map *m;             // Map object
 
+// Eucledian distance
+extern inline float norm2(float x1, float x2, float y1, float y2) {
+    return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+}
+
 /// Raycasting
 void raycast() {
     float ra = pa - M_PI_4; // ray angle
@@ -36,15 +41,17 @@ void raycast() {
     double hdx, hdy, hrx, hry; // horizontal ray intercept points and offests
     double vdx, vdy, vrx, vry; // vertical ray intercept points and offests
     int dop;                // depth of perception value in terms of number of blocks (how far a player can see)
+    int ray_count = 0;      // number of rays generated
 
-    while (right_angle < pa + M_PI_4) { 
+    while (right_angle < pa + M_PI_4) {
+        ray_count++;
         // check ray angle bounds
         ra = (ra < 0) ? (2 * M_PI + ra) : ra;
         ra = (ra >= 2 * M_PI) ? (ra - 2 * M_PI) : ra;
         // define depth of perception max ray length
         dop = 10;
 
-        /// Based on the direction of a ray compute the first Horizonatal and Vertical line intercepts
+        /// Based on the direction of a ray compute the first Horizontal and Vertical line intercepts
         /// Vertical intercept
         float tanra = tan(ra);
         // ray facing right
@@ -144,24 +151,62 @@ void raycast() {
 
         // Select the smaller distance to a wall (horizontal vs vertical)
         int rx, ry; // ray end point coordinates
+        float v_distance, h_distance;
+        float distance;
         // if ray hit both edges, pick one with the shortest distance from player
         if (horizontal_hit && vertical_hit) {
-            float v_distance = sqrt((px - vrx) * (px - vrx) + (py - vry) * (py - vry));
-            float h_distance = sqrt((px - hrx) * (px - hrx) + (py - hry) * (py - hry));
+            v_distance = norm2(px, vrx, py, vry);
+            h_distance = norm2(px, hrx, py, hry);
             bool vertical = (v_distance < h_distance);
-            rx = vertical ? vrx : hrx;
-            ry = vertical ? vry : hry;
-        }
-        // Horizontal hit occurred
-        else if (horizontal_hit) {
-            rx = hrx;
-            ry = hry;
+            // vertical hit
+            if (vertical) {
+                rx = vrx;
+                ry = vry;
+                distance = v_distance;
+                glColor3f(0, 0.9, 0);
+            }
+            // horizontal hit
+            else {
+                rx = hrx;
+                ry = hry;
+                distance = h_distance;
+                glColor3f(0, 0.7, 0);
+            }
         }
         // vertical hit occurred
-        else {
+        else if (vertical_hit) {
+            distance = norm2(px, vrx, py, vry);
             rx = vrx;
             ry = vry;
+            glColor3f(0, 0.9, 0);
         }
+        // Horizontal hit occurred
+        else {
+            distance = norm2(px, hrx, py, hry);
+            rx = hrx;
+            ry = hry;
+            glColor3f(0, 0.7, 0);
+        }
+
+        // Adjust distance value to remove "fisheye" effect
+        float ra_to_pa = ra-pa;
+        ra_to_pa = (ra_to_pa < 0) ? 2*M_PI + ra_to_pa : ra_to_pa;
+        ra_to_pa = (ra_to_pa > 2*M_PI) ? ra_to_pa - 2*M_PI : ra_to_pa;
+        distance *= cos(ra_to_pa); 
+
+        // Draw 3D walls
+        // Volume of 3D map (cube) divided by the ray length
+        int SCREEN_HEIGHT = m->height * WALL_BLOCK_SIZE / 1.5;
+        float lineHeight = (m->height * m->width * SCREEN_HEIGHT) / distance;
+        // cap the line height at screen height
+        lineHeight = (lineHeight > SCREEN_HEIGHT) ? SCREEN_HEIGHT : lineHeight;
+        // Draw the columns
+        float height_off = (m->height * WALL_BLOCK_SIZE)/2 - lineHeight/2; 
+        glLineWidth(8);  // Columns of width 8
+        glBegin(GL_LINES);
+            glVertex2i(ray_count*8+(m->width * WALL_BLOCK_SIZE), height_off);
+            glVertex2i(ray_count*8+(m->width * WALL_BLOCK_SIZE), lineHeight + height_off);
+        glEnd();
         
         // Draw resulting ray
         glColor3f(0, 1, 0);
