@@ -27,6 +27,7 @@
 int px, py;         // player position global variables
 float pa;           // player position angle in randians
 float x_off, y_off; // x and y offsets based on player angle
+float ph;           // player height view
 Map *m;             // Map object
 
 // Eucledian distance
@@ -189,19 +190,19 @@ void raycast() {
         }
 
         // Adjust distance value to remove "fisheye" effect
-        float ra_to_pa = ra-pa;
-        ra_to_pa = (ra_to_pa < 0) ? 2*M_PI + ra_to_pa : ra_to_pa;
-        ra_to_pa = (ra_to_pa > 2*M_PI) ? ra_to_pa - 2*M_PI : ra_to_pa;
-        distance *= cos(ra_to_pa); 
+        // float ra_to_pa = ra-pa;
+        // ra_to_pa = (ra_to_pa < 0) ? 2*M_PI + ra_to_pa : ra_to_pa;
+        // ra_to_pa = (ra_to_pa > 2*M_PI) ? ra_to_pa - 2*M_PI : ra_to_pa;
+        // distance *= cos(ra_to_pa); 
 
         // Draw 3D walls
         // Volume of 3D map (cube) divided by the ray length
-        int SCREEN_HEIGHT = m->height * WALL_BLOCK_SIZE / 1.5;
+        int SCREEN_HEIGHT = HEIGHT;//m->height * WALL_BLOCK_SIZE / 1.5;
         float lineHeight = (m->height * m->width * SCREEN_HEIGHT) / distance;
         // cap the line height at screen height
         lineHeight = (lineHeight > SCREEN_HEIGHT) ? SCREEN_HEIGHT : lineHeight;
         // Draw the columns
-        float height_off = (m->height * WALL_BLOCK_SIZE)/2 - lineHeight/2; 
+        float height_off = (m->height * WALL_BLOCK_SIZE)/2 - lineHeight/2 + ph; 
         glLineWidth(8);  // Columns of width 8
         glBegin(GL_LINES);
             glVertex2i(ray_count*8+(m->width * WALL_BLOCK_SIZE), height_off);
@@ -268,8 +269,8 @@ void drawMap2D() {
 /// Update coordinates upon button presses. Redraw the screen
 void playerMove(unsigned char key, int x, int y) {
     switch (key) {
-        case 'w': px += x_off; py += y_off; break;
-        case 's': px -= x_off; py -= y_off; break;
+        case 'w': ph += 25; break;
+        case 's': ph -= 25; break;
         case 'a': pa -= 0.1; 
                   pa = (pa < 0) ? (2 * M_PI + pa) : pa;
                   x_off = cos(pa) * STEP_SIZE;
@@ -309,6 +310,7 @@ void init() {
     pa = M_PI_2;                        // player initial view angle
     x_off = cos(pa) * STEP_SIZE;     // player view x_offset
     y_off = sin(pa) * STEP_SIZE;     // player view y_offset
+    ph = 0;
 }
 
 /// Main
